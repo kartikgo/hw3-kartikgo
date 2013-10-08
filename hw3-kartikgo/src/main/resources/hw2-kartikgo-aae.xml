@@ -22,9 +22,6 @@
   <delegateAnalysisEngine key="ScoreAnnotator">
       <import name="ScoreAnnotator"/>
     </delegateAnalysisEngine>
-  <delegateAnalysisEngine key="Evaluator">
-      <import name="Evaluator"/>
-    </delegateAnalysisEngine>
   </delegateAnalysisEngineSpecifiers>
   <analysisEngineMetaData>
     <name>OverAllStructureAnnotator</name>
@@ -41,7 +38,6 @@
         <node>UniGramAnnotator</node>
         <node>TriGramAnnotator</node>
       <node>ScoreAnnotator</node>
-      <node>Evaluator</node>
       </fixedFlow>
     </flowConstraints>
     <fsIndexCollection/>
@@ -60,7 +56,7 @@
     </capabilities>
   <operationalProperties>
       <modifiesCas>true</modifiesCas>
-      <multipleDeploymentAllowed>true</multipleDeploymentAllowed>
+      <multipleDeploymentAllowed>false</multipleDeploymentAllowed>
       <outputsNewCASes>false</outputsNewCASes>
     </operationalProperties>
   </analysisEngineMetaData>
