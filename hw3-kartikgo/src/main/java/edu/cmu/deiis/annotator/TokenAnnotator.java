@@ -29,6 +29,7 @@ import edu.stanford.nlp.ling.CoreAnnotations.CharacterOffsetBeginAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.CharacterOffsetEndAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.EndIndexAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.LemmaAnnotation;
+import edu.stanford.nlp.ling.CoreAnnotations.NamedEntityTagAnnotation;
 //import edu.stanford.nlp.ling.CoreAnnotations.NamedEntityTagAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.PartOfSpeechAnnotation;
 import edu.stanford.nlp.ling.CoreAnnotations.SentencesAnnotation;
@@ -78,7 +79,9 @@ public class TokenAnnotator extends JCasAnnotator_ImplBase {
     FSIndex ansIdx = jCas.getAnnotationIndex(Answer.type);
     Iterator que = quesIdx.iterator();
     Iterator ans = ansIdx.iterator();
-
+    String preNe = "";
+    int neBegin = 0;
+    int neEnd = 0;
     while (que.hasNext()) {
       Question ques = (Question) que.next();
       Annotation document = this.processor.process(ques.getCoveredText());
@@ -90,20 +93,51 @@ public class TokenAnnotator extends JCasAnnotator_ImplBase {
         int end = ques.getBegin()+tokenAnn.get(CharacterOffsetEndAnnotation.class);
         String pos = tokenAnn.get(PartOfSpeechAnnotation.class);
         String lemma = tokenAnn.get(LemmaAnnotation.class);
+        
         Token token = new Token(jCas, begin, end);
         token.setCasProcessorId("Stanford-Question");
         token.setPOS(pos);
         token.setLemma(lemma);
         token.setConfidence(1.0);
         token.addToIndexes();
+     // Add NER annotation
+        String ne = tokenAnn.get(NamedEntityTagAnnotation.class);
+        if (ne != null) {
+          // System.out.println("[" + token.originalText() + "] :" +
+          // ne);
+          if (ne.equals(preNe) && !preNe.equals("")) {
+
+          } else if (preNe.equals("")) {
+            // if the previous is start of sentence(no label).
+            neBegin = begin;
+            preNe = ne;
+          } else {
+            if (!preNe.equals("O")) {// "O" represent no label
+              EntityMention sne = new EntityMention(jCas);
+              sne.setBegin(neBegin);
+              sne.setEnd(neEnd);
+              sne.setEntityType(preNe);
+              // sne.setEntitySpan(documentText.substring(neBegin,neEnd));
+              sne.addToIndexes();
+            }
+            // set the next span of NE
+            neBegin = begin;
+            preNe = ne;
+          }
+          neEnd = end;
+        }
+        //
       }
     }
     int count=0;
+    
     while (ans.hasNext()) {
       count +=1;
       Answer answ = (Answer) ans.next();
       Annotation Adocument = this.processor.process(answ.getCoveredText());
-      
+      preNe = "";
+      neBegin = 0;
+      neEnd = 0;
       for (CoreMap tokenAnn : Adocument.get(TokensAnnotation.class)) {
 
         // create the token annotation
@@ -117,6 +151,32 @@ public class TokenAnnotator extends JCasAnnotator_ImplBase {
         token.setLemma(lemma);
         token.setConfidence(1.0);
         token.addToIndexes();
+     // Add NER annotation
+        String ne = tokenAnn.get(NamedEntityTagAnnotation.class);
+        if (ne != null) {
+          // System.out.println("[" + token.originalText() + "] :" +
+          // ne);
+          if (ne.equals(preNe) && !preNe.equals("")) {
+
+          } else if (preNe.equals("")) {
+            // if the previous is start of sentence(no label).
+            neBegin = begin;
+            preNe = ne;
+          } else {
+            if (!preNe.equals("O")) {// "O" represent no label
+              EntityMention sne = new EntityMention(jCas);
+              sne.setBegin(neBegin);
+              sne.setEnd(neEnd);
+              sne.setEntityType(preNe);
+              // sne.setEntitySpan(documentText.substring(neBegin,neEnd));
+              sne.addToIndexes();
+            }
+            // set the next span of NE
+            neBegin = begin;
+            preNe = ne;
+          }
+          neEnd = end;
+        }
       }
     }
   }

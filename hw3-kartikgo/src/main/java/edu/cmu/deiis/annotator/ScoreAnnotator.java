@@ -39,14 +39,17 @@ public class ScoreAnnotator extends JCasAnnotator_ImplBase {
     FSIndex tokenIdx = jCas.getAnnotationIndex(Token.type);
     FSIndex ngIdx = jCas.getAnnotationIndex(NGram.type);
     FSIndex neIdx = jCas.getAnnotationIndex(NamedEntityMention.type);
+    FSIndex nelIdx= jCas.getAnnotationIndex(EntityMention.type);
     Iterator que = quesIdx.iterator();
     Iterator ans = ansIdx.iterator();
     Iterator tok = tokenIdx.iterator();
     Iterator ng = ngIdx.iterator();
     Iterator ne = neIdx.iterator();
+    Iterator nel = nelIdx.iterator();
     ArrayList<Token> questionTok = new ArrayList<Token>();
     ArrayList<NGram> questionGram = new ArrayList<NGram>();
     ArrayList<NamedEntityMention> questionne = new ArrayList<NamedEntityMention>();
+    ArrayList<EntityMention> questionnel = new ArrayList<EntityMention>();
     while (que.hasNext()) {
       Question q = (Question) que.next();
       int qbeg = q.getBegin();
@@ -69,15 +72,23 @@ public class ScoreAnnotator extends JCasAnnotator_ImplBase {
           questionne.add(nen);
         }
       }
+      while (nel.hasNext()) {
+        EntityMention nenl = (EntityMention) nel.next();
+        if ((nenl.getBegin() >= qbeg) && (nenl.getEnd() <= qend)) {
+          questionnel.add(nenl);
+        }
+      }
     }
 
     while (ans.hasNext()) {
       tok = tokenIdx.iterator();
       ng = ngIdx.iterator();
       ne = neIdx.iterator();
+      nel= nelIdx.iterator();
       ArrayList<Token> answerTok = new ArrayList<Token>();
       ArrayList<NGram> answerGram = new ArrayList<NGram>();
       ArrayList<NamedEntityMention> answerne = new ArrayList<NamedEntityMention>();
+      ArrayList<EntityMention> answernel = new ArrayList<EntityMention>();
       Answer a = (Answer) ans.next();
       int abeg = a.getBegin();
       int aend = a.getEnd();
@@ -118,7 +129,7 @@ public class ScoreAnnotator extends JCasAnnotator_ImplBase {
 
       double totne = (double) answerne.size();
       double neOl = 0;
-
+            
       for (NamedEntityMention qne : questionne) {
         for (NamedEntityMention ane : answerne) {
           if (ane.getCoveredText().equals(qne.getCoveredText())) {
@@ -133,7 +144,32 @@ public class ScoreAnnotator extends JCasAnnotator_ImplBase {
       } else {
         neScore = 0.0;
       }
+      
+      while (nel.hasNext()) {
+        EntityMention t = (EntityMention) nel.next();
+        if ((t.getBegin() >= abeg) && (t.getEnd() <= aend)) {
+          answernel.add(t);
+        }
+      }
 
+      double totnel = (double) answernel.size();
+      double nelOl = 0;
+      
+      for (EntityMention qnel : questionnel) {
+        for (EntityMention anel : answernel) {
+          if (anel.getCoveredText().equals(qnel.getCoveredText())) {
+            nelOl += 1;
+          }
+
+        }
+      }
+      double nelScore = 0.0;
+      if (totnel != 0) {
+        nelScore = nelOl / totnel;
+      } else {
+        nelScore = 0.0;
+      }
+      
       while (ng.hasNext()) {
         NGram n = (NGram) ng.next();
         if ((n.getBegin() >= abeg) && (n.getEnd() <= aend)) {
@@ -212,7 +248,7 @@ public class ScoreAnnotator extends JCasAnnotator_ImplBase {
       double gramPOSScore = gramPOSOl / totgram;
       double gramlemmaScore = gramlemmaOl / totgram;
       // Setting answerscore
-      double combinedScore = ((0.25 * tokScore) + (0.25 * gramScore) + (0.05 * neScore)
+      double combinedScore = ((0.3 * tokScore) + (0.3 * gramScore) + (0.05 * neScore)+(0.05 * nelScore)
               + (0.20 * lemmaScore) + (0.15 * gramlemmaScore) + (0.05 * POSScore) + (0.05 * gramPOSScore));
       AnswerScore tokLevelScore = new AnswerScore(jCas);
       tokLevelScore.setAnswer(a);

@@ -95,5 +95,17 @@
         </featureDescription>
       </features>
     </typeDescription>
+    <typeDescription>
+      <name>edu.cmu.deiis.types.EntityMention</name>
+      <description>This annotate the entity mention from the text</description>
+      <supertypeName>edu.cmu.deiis.types.Annotation</supertypeName>
+      <features>
+        <featureDescription>
+          <name>entityType</name>
+          <description>the entity type of this mention</description>
+          <rangeTypeName>uima.cas.String</rangeTypeName>
+        </featureDescription>
+      </features>
+    </typeDescription>
   </types>
 </typeSystemDescription>
